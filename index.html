@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comunicador Simple</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --danger:#ef4444;
+      --btn:#1f2937;
+      --btn2:#334155;
+      --shadow: 0 10px 20px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1220, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(17,24,39,.65);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top:0;
+      z-index:10;
+    }
+    .top{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .title{
+      font-weight:700;
+      font-size:1rem;
+      letter-spacing:.2px;
+    }
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    select, button.ctrl, input[type="range"]{
+      background:#0b1220;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:.95rem;
+    }
+    input[type="range"]{
+      padding:0;
+      width:110px;
+      height:36px;
+    }
+
+    main{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      flex:1;
+    }
+
+    .status{
+      background: rgba(17,24,39,.9);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+    .status .label{
+      color:var(--muted);
+      font-size:.85rem;
+      margin-bottom:6px;
+    }
+    .status .message{
+      font-size:1.35rem;
+      font-weight:700;
+      line-height:1.15;
+      min-height:2.4em;
+      display:flex;
+      align-items:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+
+    .speak-btn{
+      border:none;
+      border-radius:18px;
+      padding:16px 12px;
+      min-height:88px;
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      color: var(--text);
+      font-size:1.2rem;
+      font-weight:800;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      transition: transform .06s ease, opacity .2s ease;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:4px;
+      text-align:center;
+    }
+    .speak-btn small{
+      font-size:.8rem;
+      font-weight:600;
+      color:#cbd5e1;
+      opacity:.9;
+    }
+    .speak-btn:active{ transform: scale(.98); }
+    .speak-btn.active{
+      outline: 3px solid rgba(34,197,94,.55);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .action{
+      flex:1;
+      min-width:140px;
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      background:#1f2937;
+      color:var(--text);
+    }
+    .action.primary{ background: linear-gradient(180deg, #16a34a, #15803d); }
+    .action.warn{ background: linear-gradient(180deg, #f59e0b, #d97706); }
+    .action.danger{ background: linear-gradient(180deg, #ef4444, #b91c1c); }
+
+    .editor{
+      background: rgba(17,24,39,.9);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px;
+      display:none;
+    }
+    .editor.show{ display:block; }
+    .editor h3{
+      margin:0 0 10px;
+      font-size:1rem;
+    }
+    .editor-grid{
+      display:grid;
+      gap:8px;
+    }
+    .editor-grid .item{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+    }
+    .editor input{
+      width:100%;
+      background:#0b1220;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;
+      padding:10px;
+      font-size:.95rem;
+    }
+    .muted{
+      color:var(--muted);
+      font-size:.85rem;
+    }
+    footer{
+      padding:10px 12px 14px;
+      color:var(--muted);
+      font-size:.8rem;
+      text-align:center;
+    }
+
+    @media (min-width: 700px){
+      .grid{
+        grid-template-columns: repeat(3, minmax(0,1fr));
+      }
+      .speak-btn{
+        min-height:100px;
+        font-size:1.25rem;
+      }
+      .status .message{
+        font-size:1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <div class="title">🗣️ Comunicador simple</div>
+      <div class="controls">
+        <select id="voiceSelect" title="Voz"></select>
+        <label style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:.9rem;color:#cbd5e1;">Vol</span>
+          <input id="volumeRange" type="range" min="0.1" max="1" step="0.1" value="1">
+        </label>
+        <button id="testVoice" class="ctrl">Probar voz</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="status" aria-live="polite">
+      <div class="label">Último mensaje</div>
+      <div id="lastMessage" class="message">Toca un botón para hablar.</div>
+      <div class="muted">Consejo: usa volumen alto en el dispositivo.</div>
+    </section>
+
+    <section id="buttonsGrid" class="grid" aria-label="Botones de comunicación"></section>
+
+    <div class="row">
+      <button id="repeatBtn" class="action primary">🔁 Repetir</button>
+      <button id="stopBtn" class="action warn">⏹️ Detener voz</button>
+      <button id="helpBtn" class="action danger">🚨 AYUDA</button>
+      <button id="toggleEditBtn" class="action">✏️ Editar palabras</button>
+    </div>
+
+    <section id="editor" class="editor">
+      <h3>Editar botones (texto en botón / frase que se dirá)</h3>
+      <div id="editorGrid" class="editor-grid"></div>
+      <div class="row" style="margin-top:10px;">
+        <button id="saveBtn" class="action primary">💾 Guardar cambios</button>
+        <button id="resetBtn" class="action">↺ Restaurar por defecto</button>
+      </div>
+      <p class="muted" style="margin-top:8px;">
+        Los cambios quedan guardados en este dispositivo.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    Hecho para comunicación básica por botones + voz (texto a voz del dispositivo).
+  </footer>
+
+  <script>
+    var DEFAULT_ITEMS = [
+      { label: "💧 Agua", text: "Quiero agua, por favor." },
+      { label: "🍽️ Hambre", text: "Tengo hambre." },
+      { label: "😣 Dolor", text: "Me duele. Por favor ayúdame." },
+      { label: "🛏️ Posición", text: "Ayúdame a cambiar de posición, por favor." },
+      { label: "🚽 Baño", text: "Necesito ir al baño." },
+      { label: "🥶 Frío", text: "Tengo frío." },
+      { label: "🥵 Calor", text: "Tengo calor." },
+      { label: "😴 Cansado", text: "Estoy cansado." },
+      { label: "🧴 Medicamento", text: "Necesito mi medicamento, por favor." },
+      { label: "👨‍⚕️ Llamar", text: "Por favor, llamen al cuidador." },
+      { label: "✅ Sí", text: "Sí." },
+      { label: "❌ No", text: "No." }
+    ];
+
+    var STORAGE_KEY = "comunicador_simple_items_v1";
+    var STATE_KEY = "comunicador_simple_state_v1";
+
+    var grid = document.getElementById("buttonsGrid");
+    var lastMessage = document.getElementById("lastMessage");
+    var repeatBtn = document.getElementById("repeatBtn");
+    var stopBtn = document.getElementById("stopBtn");
+    var helpBtn = document.getElementById("helpBtn");
+    var toggleEditBtn = document.getElementById("toggleEditBtn");
+    var editor = document.getElementById("editor");
+    var editorGrid = document.getElementById("editorGrid");
+    var saveBtn = document.getElementById("saveBtn");
+    var resetBtn = document.getElementById("resetBtn");
+    var voiceSelect = document.getElementById("voiceSelect");
+    var testVoiceBtn = document.getElementById("testVoice");
+    var volumeRange = document.getElementById("volumeRange");
+
+    var items = loadItems();
+    var lastSpoken = "Necesito ayuda.";
+    var voices = [];
+    var state = loadState();
+    var selectedVoiceURI = state.voiceURI || "";
+    var volume = Number(state.volume || 1);
+
+    volumeRange.value = String(volume);
+
+    function loadItems() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        var parsed = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      } catch (e) {}
+      return DEFAULT_ITEMS.slice();
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem(STATE_KEY) || "{}");
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        voiceURI: selectedVoiceURI,
+        volume: Number(volumeRange.value)
+      }));
+    }
+
+    function vibrate(ms) {
+      ms = ms || 40;
+      if ("vibrate" in navigator) navigator.vibrate(ms);
+    }
+
+    function speak(text, options) {
+      options = options || {};
+      var repeat = options.repeat || 1;
+
+      if (!("speechSynthesis" in window)) {
+        alert("Este navegador no soporta voz (SpeechSynthesis). Prueba con Chrome/Edge/Safari actualizados.");
+        return;
+      }
+
+      window.speechSynthesis.cancel(); // evita cola larga si aprieta muchas veces
+
+      var voice = null;
+      for (var i = 0; i < voices.length; i++) {
+        if (voices[i].voiceURI === selectedVoiceURI) {
+          voice = voices[i];
+          break;
+        }
+      }
+      if (!voice) voice = pickBestSpanishVoice();
+
+      for (var j = 0; j < repeat; j++) {
+        var utter = new SpeechSynthesisUtterance(text);
+        utter.lang = (voice && voice.lang) ? voice.lang : "es-ES";
+        utter.voice = voice || null;
+        utter.rate = 0.95;
+        utter.pitch = 1.0;
+        utter.volume = Number(volumeRange.value || 1);
+        window.speechSynthesis.speak(utter);
+      }
+
+      lastSpoken = text;
+      lastMessage.textContent = text;
+      vibrate(30);
+    }
+
+    function pickBestSpanishVoice() {
+      var preferred = [
+        /es-CL/i, /Spanish.*Chile/i,
+        /es-ES/i,
+        /es-MX/i,
+        /^es/i
+      ];
+
+      for (var r = 0; r < preferred.length; r++) {
+        for (var i = 0; i < voices.length; i++) {
+          var v = voices[i];
+          if (preferred[r].test(v.lang || "") || preferred[r].test(v.name || "")) {
+            return v;
+          }
+        }
+      }
+      return voices[0] || null;
+    }
+
+    function loadVoices() {
+      voices = (window.speechSynthesis && window.speechSynthesis.getVoices)
+        ? window.speechSynthesis.getVoices()
+        : [];
+
+      voiceSelect.innerHTML = "";
+
+      if (!voices.length) {
+        var optLoading = document.createElement("option");
+        optLoading.textContent = "Cargando voces...";
+        optLoading.value = "";
+        voiceSelect.appendChild(optLoading);
+        return;
+      }
+
+      var sorted = voices.slice().sort(function(a, b) {
+        var aEs = (a.lang || "").toLowerCase().indexOf("es") === 0 ? 0 : 1;
+        var bEs = (b.lang || "").toLowerCase().indexOf("es") === 0 ? 0 : 1;
+        if (aEs !== bEs) return aEs - bEs;
+        return (a.name || "").localeCompare(b.name || "");
+      });
+
+      var autoVoice = null;
+      if (selectedVoiceURI) {
+        for (var i = 0; i < sorted.length; i++) {
+          if (sorted[i].voiceURI === selectedVoiceURI) {
+            autoVoice = sorted[i];
+            break;
+          }
+        }
+      } else {
+        autoVoice = pickBestSpanishVoice();
+      }
+
+      for (var k = 0; k < sorted.length; k++) {
+        var v = sorted[k];
+        var opt = document.createElement("option");
+        opt.value = v.voiceURI;
+        opt.textContent = (v.name || "Voz") + " (" + (v.lang || "") + ")";
+        if (autoVoice && v.voiceURI === autoVoice.voiceURI) opt.selected = true;
+        voiceSelect.appendChild(opt);
+      }
+
+      selectedVoiceURI = voiceSelect.value;
+      saveState();
+    }
+
+    function renderButtons() {
+      grid.innerHTML = "";
+      for (var i = 0; i < items.length; i++) {
+        (function(idx) {
+          var item = items[idx];
+          var btn = document.createElement("button");
+          btn.className = "speak-btn";
+          btn.type = "button";
+          btn.setAttribute("aria-label", item.text || item.label);
+          btn.innerHTML = "<div>" + escapeHtml(item.label) + "</div><small>Tocar para hablar</small>";
+
+          btn.addEventListener("click", function() {
+            var children = grid.children;
+            for (var c = 0; c < children.length; c++) {
+              children[c].classList.remove("active");
+            }
+            btn.classList.add("active");
+            setTimeout(function() {
+              btn.classList.remove("active");
+            }, 700);
+            speak(item.text || item.label, { repeat: 1 });
+          });
+
+          grid.appendChild(btn);
+        })(i);
+      }
+    }
+
+    function renderEditor() {
+      editorGrid.innerHTML = "";
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML =
+          '<input type="text" data-type="label" data-index="' + i + '" value="' + escapeAttr(item.label) + '" placeholder="Texto del botón">' +
+          '<input type="text" data-type="text" data-index="' + i + '" value="' + escapeAttr(item.text) + '" placeholder="Frase que se dice">';
+        editorGrid.appendChild(row);
+      }
+    }
+
+    function saveEditorChanges() {
+      var inputs = editorGrid.querySelectorAll("input");
+      var next = [];
+      for (var i = 0; i < items.length; i++) {
+        next.push({ label: items[i].label, text: items[i].text });
+      }
+
+      for (var j = 0; j < inputs.length; j++) {
+        var inp = inputs[j];
+        var idx = Number(inp.getAttribute("data-index"));
+        var type = inp.getAttribute("data-type");
+        var val = (inp.value || "").trim();
+        if (val && next[idx]) next[idx][type] = val;
+      }
+
+      items = next;
+      saveItems();
+      renderButtons();
+      speak("Cambios guardados.", { repeat: 1 });
+    }
+
+    function escapeHtml(str) {
+      str = (typeof str === "undefined" || str === null) ? "" : String(str);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function escapeAttr(str) {
+      str = (typeof str === "undefined" || str === null) ? "" : String(str);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    // Eventos
+    repeatBtn.addEventListener("click", function() {
+      speak(lastSpoken, { repeat: 1 });
+    });
+
+    stopBtn.addEventListener("click", function() {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    });
+
+    helpBtn.addEventListener("click", function() {
+      speak("¡Ayuda, por favor! Necesito ayuda ahora.", { repeat: 2 });
+    });
+
+    toggleEditBtn.addEventListener("click", function() {
+      editor.classList.toggle("show");
+      if (editor.classList.contains("show")) renderEditor();
+    });
+
+    saveBtn.addEventListener("click", saveEditorChanges);
+
+    resetBtn.addEventListener("click", function() {
+      items = DEFAULT_ITEMS.slice();
+      saveItems();
+      renderButtons();
+      renderEditor();
+      speak("Restaurado por defecto.", { repeat: 1 });
+    });
+
+    voiceSelect.addEventListener("change", function() {
+      selectedVoiceURI = voiceSelect.value;
+      saveState();
+      speak("Voz seleccionada.", { repeat: 1 });
+    });
+
+    volumeRange.addEventListener("input", saveState);
+
+    testVoiceBtn.addEventListener("click", function() {
+      speak("Prueba de voz. ¿Me escuchan bien?", { repeat: 1 });
+    });
+
+    // Inicialización (con try/catch para mostrar error en pantalla)
+    try {
+      renderButtons();
+      loadVoices();
+
+      // Algunos navegadores cargan voces de forma asíncrona
+      if ("speechSynthesis" in window && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    } catch (err) {
+      lastMessage.textContent = "Error al cargar la app: " + (err && err.message ? err.message : err);
+      console.error(err);
+    }
+  </script>
+</body>
+</html>
